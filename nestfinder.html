@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NestFinder — Smart Property Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f2340;
+  --navy2:#1a3559;
+  --gold:#b8973a;
+  --gold2:#d4af58;
+  --cream:#faf8f4;
+  --soft:#f0ece3;
+  --text:#1a1a1a;
+  --muted:#6b7280;
+  --border:#e5e0d5;
+  --white:#ffffff;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh}
+h1,h2,h3,h4{font-family:'Cormorant Garamond',serif;font-weight:400}
+
+/* HEADER */
+.header{background:var(--navy);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 20px rgba(0,0,0,0.3)}
+.logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:24px;letter-spacing:1px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.logo-gem{width:10px;height:10px;background:var(--gold);transform:rotate(45deg)}
+.nav{display:flex;align-items:center;gap:32px}
+.nav-link{color:rgba(255,255,255,0.65);font-size:13px;cursor:pointer;transition:color .2s;letter-spacing:0.3px}
+.nav-link:hover,.nav-link.active{color:#fff}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.btn-outline{background:transparent;border:1px solid rgba(184,151,58,0.6);color:var(--gold);padding:7px 18px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;letter-spacing:0.5px}
+.btn-outline:hover{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.btn-solid{background:var(--gold);border:1px solid var(--gold);color:var(--navy);padding:7px 18px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:0.5px}
+.btn-solid:hover{background:var(--gold2);border-color:var(--gold2)}
+.fav-count{background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-left:4px}
+
+/* HERO */
+.hero{background:var(--navy);padding:60px 40px 80px;position:relative;overflow:hidden}
+.hero-ring{position:absolute;border:1px solid rgba(184,151,58,0.12);border-radius:50%}
+.hero-ring:nth-child(1){width:600px;height:600px;right:-150px;top:-200px}
+.hero-ring:nth-child(2){width:400px;height:400px;right:-80px;top:-100px}
+.hero-ring:nth-child(3){width:200px;height:200px;right:0;top:20px}
+.hero-content{position:relative;max-width:700px}
+.hero-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--gold);margin-bottom:16px;font-weight:500}
+.hero-title{font-size:52px;color:#fff;line-height:1.15;margin-bottom:12px}
+.hero-title em{color:var(--gold);font-style:italic}
+.hero-sub{color:rgba(255,255,255,0.55);font-size:15px;font-weight:300;margin-bottom:36px;line-height:1.6;max-width:480px}
+.search-wrap{display:flex;background:#fff;overflow:hidden;max-width:600px;box-shadow:0 8px 40px rgba(0,0,0,0.25)}
+.search-input{flex:1;padding:16px 20px;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text)}
+.search-input::placeholder{color:#b0aaa0}
+.search-divider{width:1px;background:var(--border);margin:12px 0}
+.search-select{padding:16px 16px;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);background:#fff;cursor:pointer;min-width:140px}
+.search-btn{background:var(--navy);color:#fff;border:none;padding:16px 28px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:background .2s;white-space:nowrap;letter-spacing:0.5px}
+.search-btn:hover{background:var(--gold);color:var(--navy)}
+.hero-stats{display:flex;gap:40px;margin-top:36px}
+.hero-stat{text-align:left}
+.hero-stat-num{font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;font-weight:600}
+.hero-stat-label{font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+.suggestions-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;z-index:300;box-shadow:0 12px 40px rgba(0,0,0,0.15);border-top:2px solid var(--gold)}
+.suggestion-item{padding:12px 20px;font-size:13px;cursor:pointer;color:var(--text);transition:background .15s;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f5f3ee}
+.suggestion-item:last-child{border-bottom:none}
+.suggestion-item:hover{background:#faf8f4;color:var(--gold)}
+.suggestion-pin{font-size:14px;opacity:0.5}
+
+/* MAIN LAYOUT */
+.main{display:flex;min-height:calc(100vh - 64px)}
+
+/* SIDEBAR */
+.sidebar{width:260px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);padding:28px 20px;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto}
+.sidebar-section{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.sidebar-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.sidebar-title{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--muted);margin-bottom:14px;font-weight:500}
+.pills{display:flex;flex-wrap:wrap;gap:7px}
+.pill{padding:6px 12px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:var(--white);transition:all .15s;letter-spacing:0.2px}
+.pill:hover{border-color:var(--navy);color:var(--navy)}
+.pill.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pill.active-gold{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.filter-label{font-size:12px;color:var(--muted);margin-bottom:8px;display:block;margin-top:14px}
+.filter-label:first-child{margin-top:0}
+.range-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.range-input{width:90px;padding:8px 10px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);outline:none;transition:border .2s}
+.range-input:focus{border-color:var(--gold)}
+.range-dash{color:var(--muted);font-size:12px}
+.stat-block{background:var(--soft);padding:14px;margin-bottom:8px}
+.stat-block:last-child{margin-bottom:0}
+.stat-block-num{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--navy);font-weight:600}
+.stat-block-label{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* RESULTS */
+.results{flex:1;padding:28px 32px;min-width:0}
+.results-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.results-count{font-size:14px;color:var(--muted)}
+.results-count strong{color:var(--text);font-weight:500}
+.results-right{display:flex;align-items:center;gap:12px}
+.view-toggle{display:flex;border:1px solid var(--border);overflow:hidden}
+.view-btn{padding:7px 12px;background:#fff;border:none;cursor:pointer;font-size:14px;color:var(--muted);transition:all .15s}
+.view-btn.active{background:var(--navy);color:#fff}
+.sort-select{padding:8px 12px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);background:#fff;outline:none;cursor:pointer}
+.sort-select:focus{border-color:var(--gold)}
+
+/* PROPERTY GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+.grid.list-view{grid-template-columns:1fr}
+
+/* CARD */
+.card{background:#fff;border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:all .3s;position:relative}
+.card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(15,35,64,0.12);border-color:rgba(184,151,58,0.4)}
+.card-thumb{width:100%;height:190px;position:relative;overflow:hidden}
+.card-thumb-inner{width:100%;height:100%;transition:transform .5s cubic-bezier(0.25,0.46,0.45,0.94)}
+.card:hover .card-thumb-inner{transform:scale(1.06)}
+.card-badge{position:absolute;top:12px;left:12px;font-size:10px;padding:4px 10px;letter-spacing:1px;text-transform:uppercase;font-weight:500;z-index:2}
+.card-badge.featured{background:var(--navy);color:#fff}
+.card-badge.new{background:#1a6b3c;color:#fff}
+.card-badge.exclusive{background:var(--gold);color:var(--navy)}
+.card-badge.sale{background:#8b1a1a;color:#fff}
+.card-fav{position:absolute;top:10px;right:10px;width:32px;height:32px;background:rgba(255,255,255,0.92);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:2;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.card-fav:hover{transform:scale(1.15);background:#fff}
+.card-fav.active{color:#e53e3e}
+.card-body{padding:16px}
+.card-type{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);font-weight:500;margin-bottom:5px}
+.card-title{font-size:17px;color:var(--text);line-height:1.25;margin-bottom:6px}
+.card-loc{font-size:12px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:4px}
+.card-price{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--navy);font-weight:600}
+.card-price sup{font-size:13px;font-family:'DM Sans',sans-serif;font-weight:400;color:var(--muted)}
+.card-meta{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.meta-item{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.meta-item b{font-size:13px;color:var(--text);font-weight:500}
+
+/* LIST VIEW CARD */
+.card.list-card{display:flex;flex-direction:row;height:160px}
+.list-card .card-thumb{width:220px;height:100%;flex-shrink:0}
+.list-card .card-body{display:flex;flex-direction:column;justify-content:space-between;padding:18px 20px;flex:1}
+.list-card .card-meta{margin-top:0;padding-top:0;border-top:none}
+
+/* RECENTLY VIEWED */
+.recently{padding:24px 40px;background:var(--soft);border-top:1px solid var(--border)}
+.recently-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.recently-title{font-size:11px;text-transform:uppercase;letter-spacing:2.5px;color:var(--muted);font-weight:500}
+.recently-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:4px}
+.recently-row::-webkit-scrollbar{height:3px}
+.recently-row::-webkit-scrollbar-track{background:#e5e0d5}
+.recently-row::-webkit-scrollbar-thumb{background:var(--gold)}
+.mini-card{min-width:180px;background:#fff;border:1px solid var(--border);overflow:hidden;cursor:pointer;display:flex;align-items:center;gap:12px;padding:10px;transition:all .2s}
+.mini-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+.mini-thumb{width:52px;height:52px;flex-shrink:0;overflow:hidden}
+.mini-info{flex:1;min-width:0}
+.mini-name{font-size:13px;font-weight:400;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Cormorant Garamond',serif}
+.mini-loc{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0}
+.mini-price{font-size:12px;color:var(--gold);font-weight:500}
+
+/* MODAL OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(5,14,28,0.75);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:30px 20px;overflow-y:auto;backdrop-filter:blur(4px)}
+.modal{background:#fff;width:100%;max-width:820px;margin:auto;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.4);animation:slideUp .3s cubic-bezier(0.25,0.46,0.45,0.94)}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+/* GALLERY */
+.gallery{position:relative;height:380px;overflow:hidden;background:var(--soft)}
+.gallery-img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery-close{position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.55);color:#fff;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;z-index:10;transition:background .15s}
+.gallery-close:hover{background:rgba(0,0,0,0.85)}
+.gallery-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.85);border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 2px 12px rgba(0,0,0,0.15)}
+.gallery-nav:hover{background:#fff;transform:translateY(-50%) scale(1.05)}
+.gallery-nav.prev{left:14px}
+.gallery-nav.next{right:14px}
+.gallery-dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:7px}
+.gdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.5);cursor:pointer;transition:all .2s}
+.gdot.active{background:#fff;width:22px;border-radius:4px}
+.gallery-badge{position:absolute;bottom:14px;left:14px;z-index:2}
+.gallery-fav{position:absolute;top:14px;left:14px;background:rgba(255,255,255,0.9);border:none;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.gallery-fav:hover{transform:scale(1.1);background:#fff}
+.gallery-fav.active{color:#e53e3e}
+
+/* MODAL BODY */
+.modal-body{display:grid;grid-template-columns:1fr 320px;gap:0}
+.modal-left{padding:28px 28px 28px}
+.modal-right{padding:24px;background:var(--soft);border-left:1px solid var(--border)}
+.modal-type{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--gold);font-weight:500;margin-bottom:6px}
+.modal-title{font-size:32px;color:var(--navy);line-height:1.15;margin-bottom:8px}
+.modal-loc{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:20px}
+.modal-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.modal-price{font-family:'Cormorant Garamond',serif;font-size:36px;color:var(--navy);font-weight:600}
+.modal-price-note{font-size:12px;color:var(--muted)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);margin-bottom:24px;background:var(--border)}
+.stat-cell{background:#fff;padding:14px 10px;text-align:center}
+.stat-cell-val{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--navy);font-weight:600}
+.stat-cell-key{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-top:3px}
+.modal-desc{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:20px}
+.modal-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:24px}
+.tag{padding:5px 12px;background:var(--soft);color:var(--muted);font-size:11px;border:1px solid var(--border);letter-spacing:0.3px}
+
+/* MAP */
+.map-box{background:#fff;border:1px solid var(--border);height:160px;position:relative;overflow:hidden;margin-bottom:20px}
+.map-svg{width:100%;height:100%;opacity:0.15}
+.map-pin-wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.map-pin-dot{width:14px;height:14px;background:var(--gold);border-radius:50%;border:3px solid var(--navy);box-shadow:0 0 0 4px rgba(184,151,58,0.25)}
+.map-coords{font-size:10px;color:var(--muted);text-align:center;line-height:1.5}
+
+/* 3D WALKTHROUGH */
+.walkthrough-trigger{width:100%;padding:12px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-bottom:16px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:500;letter-spacing:0.5px}
+.walkthrough-trigger:hover{background:var(--gold);color:var(--navy)}
+.walkthrough-frame{background:var(--navy);padding:32px 20px;text-align:center;margin-bottom:16px;position:relative;overflow:hidden;border:1px solid rgba(184,151,58,0.3)}
+.wf-icon{font-size:40px;color:var(--gold);margin-bottom:12px}
+.wf-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;margin-bottom:8px}
+.wf-note{font-size:11px;color:rgba(255,255,255,0.45);line-height:1.7}
+.wf-orb{position:absolute;border:1px solid rgba(184,151,58,0.1);border-radius:50%}
+
+/* CONTACT */
+.agent-row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);margin-bottom:14px}
+.agent-avatar{width:44px;height:44px;border-radius:50%;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;flex-shrink:0}
+.agent-name{font-size:14px;font-weight:500;color:var(--text)}
+.agent-role{font-size:11px;color:var(--muted);margin-top:2px}
+.agent-badge{font-size:9px;background:rgba(26,107,60,0.1);color:#1a6b3c;padding:2px 8px;border-radius:2px;margin-top:4px;display:inline-block;letter-spacing:0.5px;text-transform:uppercase}
+.form-group{margin-bottom:10px}
+.form-input{width:100%;padding:10px 12px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border .2s;background:#fff}
+.form-input:focus{border-color:var(--gold)}
+.form-input::placeholder{color:#b0aaa0}
+.form-textarea{resize:vertical;min-height:80px}
+.form-submit{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .2s;letter-spacing:0.5px}
+.form-submit:hover{background:var(--gold);color:var(--navy)}
+.form-success{background:rgba(26,107,60,0.08);border:1px solid rgba(26,107,60,0.2);padding:12px;font-size:13px;color:#1a6b3c;line-height:1.5}
+
+/* EMPTY STATE */
+.empty{padding:60px 20px;text-align:center;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:16px;opacity:0.3}
+.empty-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--text);margin-bottom:8px;font-weight:400}
+.empty-desc{font-size:13px;line-height:1.6}
+
+/* FOOTER */
+.footer{background:var(--navy);padding:24px 40px;display:flex;align-items:center;justify-content:space-between}
+.footer-logo{font-family:'Cormorant Garamond',serif;color:rgba(255,255,255,0.6);font-size:16px}
+.footer-note{font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.3px}
+
+/* UTILITY */
+.hidden{display:none}
+.color-block{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:48px;color:rgba(255,255,255,0.2);user-select:none}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo"><div class="logo-gem"></div>NestFinder</div>
+  <nav class="nav">
+    <span class="nav-link active" onclick="showView('browse')">Browse</span>
+    <span class="nav-link" onclick="showView('saved')">Saved Properties</span>
+    <span class="nav-link" style="color:rgba(255,255,255,0.65)">About</span>
+    <span class="nav-link" style="color:rgba(255,255,255,0.65)">Contact</span>
+  </nav>
+  <div class="nav-actions">
+    <button class="btn-outline" onclick="showView('saved')">Saved <span class="fav-count" id="fav-count">0</span></button>
+    <button class="btn-solid">List Property</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero" id="hero-section">
+  <div class="hero-ring"></div>
+  <div class="hero-ring"></div>
+  <div class="hero-ring"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Bengaluru's Premium Real Estate</div>
+    <h1 class="hero-title">Find Your<br/><em>Perfect Home</em></h1>
+    <p class="hero-sub">Curated luxury listings, smart search, and expert guidance — all in one place.</p>
+    <div style="position:relative">
+      <div class="search-wrap">
+        <input class="search-input" id="search-input" placeholder="Search by location, property name, or type…" oninput="handleSearch(this.value)" onfocus="onSearchFocus()" onblur="onSearchBlur()"/>
+        <div class="search-divider"></div>
+        <select class="search-select" id="type-quick">
+          <option value="">All Types</option>
+          <option value="Apartment">Apartment</option>
+          <option value="Villa">Villa</option>
+          <option value="Penthouse">Penthouse</option>
+          <option value="Studio">Studio</option>
+        </select>
+        <button class="search-btn" onclick="applySearch()">Search →</button>
+      </div>
+      <div class="suggestions-dropdown hidden" id="suggestions">
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num" id="stat-total">6</div><div class="hero-stat-label">Listings</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">3</div><div class="hero-stat-label">New Launches</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">₹0.9–8.5Cr</div><div class="hero-stat-label">Price Range</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">12+</div><div class="hero-stat-label">Neighbourhoods</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Property Type</div>
+      <div class="pills" id="type-pills">
+        <div class="pill active" onclick="setType('All',this)">All</div>
+        <div class="pill" onclick="setType('Apartment',this)">Apartment</div>
+        <div class="pill" onclick="setType('Villa',this)">Villa</div>
+        <div class="pill" onclick="setType('Penthouse',this)">Penthouse</div>
+        <div class="pill" onclick="setType('Studio',this)">Studio</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Budget</div>
+      <div class="pills" id="price-pills">
+        <div class="pill active" onclick="setPrice('All',this)">All</div>
+        <div class="pill" onclick="setPrice('u1',this)">Under 1Cr</div>
+        <div class="pill" onclick="setPrice('1-3',this)">1–3 Cr</div>
+        <div class="pill" onclick="setPrice('3-6',this)">3–6 Cr</div>
+        <div class="pill" onclick="setPrice('6+',this)">6Cr+</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Bedrooms</div>
+      <div class="pills" id="bed-pills">
+        <div class="pill active" onclick="setBeds('All',this)">Any</div>
+        <div class="pill" onclick="setBeds('1',this)">1+</div>
+        <div class="pill" onclick="setBeds('2',this)">2+</div>
+        <div class="pill" onclick="setBeds('3',this)">3+</div>
+        <div class="pill" onclick="setBeds('4',this)">4+</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Status</div>
+      <div class="pills" id="status-pills">
+        <div class="pill active" onclick="setStatus('All',this)">All</div>
+        <div class="pill" onclick="setStatus('new',this)">New Launch</div>
+        <div class="pill" onclick="setStatus('ready',this)">Ready to Move</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Market Overview</div>
+      <div class="stat-block">
+        <div class="stat-block-num" id="sidebar-count">6</div>
+        <div class="stat-block-label">Active Listings</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-block-num" id="sidebar-favs">0</div>
+        <div class="stat-block-label">Saved by You</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-block-num">₹3.2Cr</div>
+        <div class="stat-block-label">Avg. Price</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- RESULTS -->
+  <div class="results" id="results-panel">
+    <div class="results-bar">
+      <div class="results-count" id="results-count"><strong>6</strong> properties found</div>
+      <div class="results-right">
+        <div class="view-toggle">
+          <button class="view-btn active" id="grid-btn" onclick="setView('grid')">▦</button>
+          <button class="view-btn" id="list-btn" onclick="setView('list')">☰</button>
+        </div>
+        <select class="sort-select" id="sort-select" onchange="render()">
+          <option value="default">Default Order</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+          <option value="size">Largest First</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid" id="prop-grid"></div>
+  </div>
+
+</div>
+
+<!-- RECENTLY VIEWED -->
+<div class="recently hidden" id="recently-section">
+  <div class="recently-header">
+    <div class="recently-title">Recently Viewed</div>
+    <button style="background:none;border:none;font-size:12px;color:var(--muted);cursor:pointer" onclick="clearViewed()">Clear</button>
+  </div>
+  <div class="recently-row" id="recently-row"></div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-logo">NestFinder</div>
+  <div class="footer-note">© 2025 NestFinder. Premium Real Estate Discovery. Bengaluru, India.</div>
+</footer>
+
+<!-- MODAL OVERLAY -->
+<div class="overlay hidden" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="gallery" id="modal-gallery">
+      <button class="gallery-close" onclick="closeModal()">✕</button>
+      <button class="gallery-fav" id="modal-fav-btn" onclick="toggleFavModal()">♡</button>
+      <div id="modal-gallery-img" style="width:100%;height:100%"></div>
+      <button class="gallery-nav prev" onclick="prevImg()">‹</button>
+      <button class="gallery-nav next" onclick="nextImg()">›</button>
+      <div class="gallery-dots" id="gallery-dots"></div>
+      <div class="gallery-badge" id="modal-badge"></div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-left">
+        <div class="modal-type" id="modal-type"></div>
+        <h2 class="modal-title" id="modal-title"></h2>
+        <div class="modal-loc" id="modal-loc"></div>
+        <div class="modal-price-row">
+          <div class="modal-price" id="modal-price"></div>
+          <div class="modal-price-note">onwards · all-inclusive</div>
+        </div>
+        <div class="stats-grid" id="modal-stats" style="gap:1px"></div>
+        <p class="modal-desc" id="modal-desc"></p>
+        <div class="modal-tags" id="modal-tags"></div>
+        <button class="walkthrough-trigger" id="wt-btn" onclick="toggleWalkthrough()">▶ &nbsp;Launch Virtual 3D Walkthrough</button>
+        <div class="walkthrough-frame hidden" id="wt-frame">
+          <div class="wf-orb" style="width:400px;height:400px;right:-150px;top:-150px"></div>
+          <div class="wf-orb" style="width:200px;height:200px;right:-50px;top:-30px"></div>
+          <div class="wf-icon">⬡</div>
+          <div class="wf-title">3D Walkthrough Active</div>
+          <p class="wf-note">Integrate Three.js / Matterport SDK at this mount point.<br/>Load GLB model → OrbitControls → Raycaster for room labelling</p>
+        </div>
+        <div class="map-box">
+          <svg class="map-svg" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="var(--navy)" stroke-width="0.5" fill="none">
+              <line x1="0" y1="20" x2="400" y2="20"/><line x1="0" y1="40" x2="400" y2="40"/>
+              <line x1="0" y1="60" x2="400" y2="60"/><line x1="0" y1="80" x2="400" y2="80"/>
+              <line x1="0" y1="100" x2="400" y2="100"/><line x1="0" y1="120" x2="400" y2="120"/>
+              <line x1="0" y1="140" x2="400" y2="140"/>
+              <line x1="40" y1="0" x2="40" y2="160"/><line x1="80" y1="0" x2="80" y2="160"/>
+              <line x1="120" y1="0" x2="120" y2="160"/><line x1="160" y1="0" x2="160" y2="160"/>
+              <line x1="200" y1="0" x2="200" y2="160"/><line x1="240" y1="0" x2="240" y2="160"/>
+              <line x1="280" y1="0" x2="280" y2="160"/><line x1="320" y1="0" x2="320" y2="160"/>
+              <line x1="360" y1="0" x2="360" y2="160"/>
+            </g>
+          </svg>
+          <div class="map-pin-wrap">
+            <div class="map-pin-dot"></div>
+            <div class="map-coords" id="modal-coords"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-right">
+        <div class="agent-row">
+          <div class="agent-avatar" id="agent-avatar"></div>
+          <div>
+            <div class="agent-name" id="agent-name"></div>
+            <div class="agent-role">Senior Property Consultant</div>
+            <div class="agent-badge">● Available Now</div>
+          </div>
+        </div>
+        <div id="contact-form-wrap">
+          <div class="form-group">
+            <input class="form-input" id="form-name" placeholder="Your full name"/>
+          </div>
+          <div class="form-group">
+            <input class="form-input" id="form-email" placeholder="Email address" type="email"/>
+          </div>
+          <div class="form-group">
+            <input class="form-input" id="form-phone" placeholder="Phone number (optional)" type="tel"/>
+          </div>
+          <div class="form-group">
+            <textarea class="form-input form-textarea" id="form-msg" placeholder="I'm interested in this property…"></textarea>
+          </div>
+          <button class="form-submit" onclick="sendMessage()">Send Message →</button>
+        </div>
+        <div class="form-success hidden" id="form-success">
+          ✓ &nbsp;Message sent! <span id="success-agent"></span> will contact you within 2 hours. We'll also send a confirmation to your email.
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1.5px">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <button style="padding:9px 12px;background:#fff;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);cursor:pointer;text-align:left;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">📅 &nbsp;Schedule Site Visit</button>
+            <button style="padding:9px 12px;background:#fff;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);cursor:pointer;text-align:left;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">📄 &nbsp;Download Brochure</button>
+            <button style="padding:9px 12px;background:#fff;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);cursor:pointer;text-align:left;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">🏦 &nbsp;Get EMI Calculator</button>
+            <button style="padding:9px 12px;background:#fff;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);cursor:pointer;text-align:left;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">↗ &nbsp;Share Property</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PROPS = [
+  {id:1,title:"The Meridian Penthouse",type:"Penthouse",loc:"Indiranagar, Bengaluru",price:4.2,beds:4,baths:3,sqft:3200,badge:"Featured",badgeClass:"featured",status:"ready",lat:12.9784,lng:77.6408,agent:"Arjun Mehta",desc:"A crown jewel above the city skyline. Floor-to-ceiling glass, a private rooftop terrace with panoramic views, chef's kitchen with Gaggenau appliances, and full smart-home automation throughout. Each room is bathed in natural light. Concierge service included.",tags:["Pool","Parking","Gym","Pet Friendly","Terrace","Concierge"],colors:["#c8a97d","#b8973a","#1a3559"]},
+  {id:2,title:"Park View Residences",type:"Apartment",loc:"Koramangala, Bengaluru",price:1.8,beds:3,baths:2,sqft:1850,badge:"New Launch",badgeClass:"new",status:"new",lat:12.9352,lng:77.6245,agent:"Priya Sharma",desc:"Modern living steps from Cubbon Park. Natural light cascades through every room of this thoughtfully designed 3BHK. Premium fittings, fully modular kitchen, and a private balcony overlooking lush greenery. Excellent connectivity to MG Road metro.",tags:["Balcony","Parking","Power Backup","Security","CCTV"],colors:["#6b8c6b","#4a7a4a","#1a3a2a"]},
+  {id:3,title:"Heritage Bungalow",type:"Villa",loc:"Sadashivanagar, Bengaluru",price:8.5,beds:5,baths:4,sqft:5400,badge:"Exclusive",badgeClass:"exclusive",status:"ready",lat:13.0052,lng:77.5667,agent:"Vikram Nair",desc:"A timeless colonial-era bungalow, lovingly restored to its original splendour. Original teak flooring, soaring ceilings, a wrap-around verandah, and a sprawling private garden. History and modern luxury combined in one exceptional address.",tags:["Private Garden","Pool","Staff Quarters","Heritage","Security","Library"],colors:["#8b7355","#6b5a3e","#3a2a1a"]},
+  {id:4,title:"Sky Loft 42",type:"Studio",loc:"HSR Layout, Bengaluru",price:0.9,beds:1,baths:1,sqft:720,badge:null,badgeClass:null,status:"new",lat:12.9116,lng:77.6369,agent:"Ananya Reddy",desc:"Perfectly curated studio loft for the urban professional. Industrial chic aesthetic with polished concrete, built-in smart storage solutions, access to a co-working lounge, rooftop café, and a rooftop infinity pool. Two minutes from NICE Road.",tags:["Coworking Space","Rooftop Pool","Metro Access","EV Charging"],colors:["#7a8a9a","#5a7080","#1a3040"]},
+  {id:5,title:"Whitfield Manor",type:"Villa",loc:"Whitefield, Bengaluru",price:5.6,beds:4,baths:3,sqft:4100,badge:"For Sale",badgeClass:"sale",status:"ready",lat:12.9698,lng:77.7499,agent:"Arjun Mehta",desc:"Gated community villa with Italian marble flooring throughout, modular kitchen with premium appliances, a dedicated home theatre room, and a beautifully landscaped garden. Close to ITPL and Prestige tech corridor.",tags:["Gated Community","Pool","Garden","Club House","Security","Home Theatre"],colors:["#9a8070","#7a6050","#3a2a20"]},
+  {id:6,title:"Zen Garden Apartments",type:"Apartment",loc:"JP Nagar, Bengaluru",price:1.2,beds:2,baths:2,sqft:1300,badge:"New Launch",badgeClass:"new",status:"new",lat:12.8956,lng:77.5848,agent:"Priya Sharma",desc:"Thoughtfully designed 2BHK inspired by Japanese minimalism. A serene landscaped garden with Zen water features, vastu-compliant layout, children's play area, and a dedicated senior citizen zone. Superb connectivity to Bannerghatta Road.",tags:["Vastu","Play Area","Lift","Parking","Zen Garden","Club House"],colors:["#6a8a7a","#4a7a6a","#1a3a2a"]},
+];
+
+const SUGGESTIONS = ["Indiranagar, Bengaluru","Koramangala, Bengaluru","Whitefield, Bengaluru","HSR Layout, Bengaluru","JP Nagar, Bengaluru","Sadashivanagar, Bengaluru","Jayanagar, Bengaluru","Electronic City, Bengaluru"];
+
+let state = {
+  search:'', type:'All', price:'All', beds:'All', status:'All',
+  sort:'default', view:'grid', favs:[], viewed:[], selected:null, imgIdx:0,
+  walkthrough:false, msgSent:false, currentView:'browse', debounceTimer:null
+};
+
+function colorBlock(colors) {
+  return `<div class="color-block" style="background:linear-gradient(135deg,${colors[0]} 0%,${colors[1]} 50%,${colors[2]} 100%)">⌂</div>`;
+}
+
+function getFiltered() {
+  let list = PROPS.filter(p => {
+    const s = state.search.toLowerCase();
+    const ms = !s || p.title.toLowerCase().includes(s) || p.loc.toLowerCase().includes(s) || p.type.toLowerCase().includes(s);
+    const mt = state.type==='All' || p.type===state.type;
+    const mp = state.price==='All' ||
+      (state.price==='u1' && p.price<1) ||
+      (state.price==='1-3' && p.price>=1 && p.price<3) ||
+      (state.price==='3-6' && p.price>=3 && p.price<6) ||
+      (state.price==='6+' && p.price>=6);
+    const mb = state.beds==='All' || p.beds>=parseInt(state.beds);
+    const mst = state.status==='All' ||
+      (state.status==='new' && p.status==='new') ||
+      (state.status==='ready' && p.status==='ready');
+    return ms && mt && mp && mb && mst;
+  });
+  if (state.currentView==='saved') list = list.filter(p=>state.favs.includes(p.id));
+  const s = state.sort;
+  if(s==='price-asc') list.sort((a,b)=>a.price-b.price);
+  if(s==='price-desc') list.sort((a,b)=>b.price-a.price);
+  if(s==='size') list.sort((a,b)=>b.sqft-a.sqft);
+  return list;
+}
+
+function render() {
+  const list = getFiltered();
+  const grid = document.getElementById('prop-grid');
+  const isGrid = state.view==='grid';
+  grid.className = isGrid?'grid':'grid list-view';
+
+  document.getElementById('results-count').innerHTML = `<strong>${list.length}</strong> ${state.currentView==='saved'?'saved':''} properties found`;
+  document.getElementById('sidebar-count').textContent = list.length;
+  document.getElementById('sidebar-favs').textContent = state.favs.length;
+  document.getElementById('fav-count').textContent = state.favs.length;
+  document.getElementById('stat-total').textContent = list.length;
+
+  if(list.length===0){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏠</div><div class="empty-title">${state.currentView==='saved'?'No Saved Properties':'No Properties Found'}</div><div class="empty-desc">${state.currentView==='saved'?'Browse listings and tap ♡ to save your favourites.':'Try adjusting your search or filters.'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(p => {
+    const isFav = state.favs.includes(p.id);
+    const cardClass = isGrid?'card':'card list-card';
+    return `<div class="${cardClass}" onclick="openProp(${p.id})">
+      <div class="card-thumb">
+        <div class="card-thumb-inner">${colorBlock(p.colors)}</div>
+        ${p.badge?`<div class="card-badge ${p.badgeClass}">${p.badge}</div>`:''}
+        <button class="card-fav ${isFav?'active':''}" onclick="toggleFav(event,${p.id})">${isFav?'♥':'♡'}</button>
+      </div>
+      <div class="card-body">
+        <div class="card-type">${p.type}</div>
+        <div class="card-title">${p.title}</div>
+        <div class="card-loc">📍 ${p.loc}</div>
+        <div class="card-price">₹${p.price} Cr <sup>onwards</sup></div>
+        <div class="card-meta">
+          <div class="meta-item"><b>${p.beds}</b>Beds</div>
+          <div class="meta-item"><b>${p.baths}</b>Baths</div>
+          <div class="meta-item"><b>${p.sqft.toLocaleString()}</b>Sq.ft</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderViewed();
+}
+
+function renderViewed() {
+  const sec = document.getElementById('recently-section');
+  const row = document.getElementById('recently-row');
+  if(state.viewed.length===0){sec.classList.add('hidden');return;}
+  sec.classList.remove('hidden');
+  row.innerHTML = state.viewed.map(p=>`
+    <div class="mini-card" onclick="openProp(${p.id})">
+      <div class="mini-thumb">${colorBlock(p.colors)}</div>
+      <div class="mini-info">
+        <div class="mini-name">${p.title}</div>
+        <div class="mini-loc">${p.loc}</div>
+        <div class="mini-price">₹${p.price} Cr</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleFav(e,id){
+  e.stopPropagation();
+  if(state.favs.includes(id)) state.favs=state.favs.filter(x=>x!==id);
+  else state.favs.push(id);
+  render();
+  if(state.selected&&state.selected.id===id) updateModalFav();
+}
+
+function toggleFavModal(){
+  const id=state.selected.id;
+  if(state.favs.includes(id)) state.favs=state.favs.filter(x=>x!==id);
+  else state.favs.push(id);
+  updateModalFav();
+  document.getElementById('sidebar-favs').textContent=state.favs.length;
+  document.getElementById('fav-count').textContent=state.favs.length;
+}
+
+function updateModalFav(){
+  const btn=document.getElementById('modal-fav-btn');
+  const isFav=state.favs.includes(state.selected.id);
+  btn.textContent=isFav?'♥':'♡';
+  btn.className='gallery-fav'+(isFav?' active':'');
+}
+
+function openProp(id){
+  const p=PROPS.find(x=>x.id===id);
+  state.selected=p; state.imgIdx=0; state.walkthrough=false; state.msgSent=false;
+  state.viewed=[p,...state.viewed.filter(x=>x.id!==id)].slice(0,6);
+  renderModal();
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.add('hidden');
+  document.body.style.overflow='';
+  render();
+}
+
+function handleOverlayClick(e){
+  if(e.target===document.getElementById('modal-overlay')) closeModal();
+}
+
+function renderModal(){
+  const p=state.selected;
+  document.getElementById('modal-type').textContent=p.type;
+  document.getElementById('modal-title').textContent=p.title;
+  document.getElementById('modal-loc').innerHTML='📍 '+p.loc;
+  document.getElementById('modal-price').textContent='₹'+p.price+' Cr';
+  document.getElementById('modal-desc').textContent=p.desc;
+  document.getElementById('modal-coords').textContent=p.lat.toFixed(4)+'°N  '+p.lng.toFixed(4)+'°E · '+p.loc;
+  document.getElementById('agent-name').textContent=p.agent;
+  document.getElementById('agent-avatar').textContent=p.agent.split(' ').map(n=>n[0]).join('');
+  document.getElementById('form-msg').placeholder='I\'m interested in '+p.title+'. Please get in touch.';
+
+  const imgs=[colorBlock(p.colors),colorBlock([p.colors[2],p.colors[1],p.colors[0]]),colorBlock([p.colors[1],p.colors[0],p.colors[2]])];
+  document.getElementById('modal-gallery-img').innerHTML=imgs[0];
+  document.getElementById('gallery-dots').innerHTML=[0,1,2].map(i=>`<div class="gdot${i===0?' active':''}" onclick="setImg(${i})"></div>`).join('');
+
+  if(p.badge) document.getElementById('modal-badge').innerHTML=`<div class="card-badge ${p.badgeClass}">${p.badge}</div>`;
+  else document.getElementById('modal-badge').innerHTML='';
+
+  document.getElementById('modal-stats').innerHTML=`
+    <div class="stat-cell"><div class="stat-cell-val">${p.beds}</div><div class="stat-cell-key">Bedrooms</div></div>
+    <div class="stat-cell"><div class="stat-cell-val">${p.baths}</div><div class="stat-cell-key">Bathrooms</div></div>
+    <div class="stat-cell"><div class="stat-cell-val">${(p.sqft/1000).toFixed(1)}k</div><div class="stat-cell-key">Sq. Ft.</div></div>
+    <div class="stat-cell"><div class="stat-cell-val">A+</div><div class="stat-cell-key">Rating</div></div>
+  `;
+  document.getElementById('modal-tags').innerHTML=p.tags.map(t=>`<span class="tag">${t}</span>`).join('');
+
+  document.getElementById('wt-frame').classList.add('hidden');
+  document.getElementById('wt-btn').innerHTML='▶ &nbsp;Launch Virtual 3D Walkthrough';
+  document.getElementById('contact-form-wrap').classList.remove('hidden');
+  document.getElementById('form-success').classList.add('hidden');
+  document.getElementById('form-name').value='';
+  document.getElementById('form-email').value='';
+  document.getElementById('form-phone').value='';
+  document.getElementById('form-msg').value='';
+  updateModalFav();
+}
+
+function setImg(i){
+  state.imgIdx=i;
+  const p=state.selected;
+  const imgs=[colorBlock(p.colors),colorBlock([p.colors[2],p.colors[1],p.colors[0]]),colorBlock([p.colors[1],p.colors[0],p.colors[2]])];
+  document.getElementById('modal-gallery-img').innerHTML=imgs[i];
+  document.querySelectorAll('.gdot').forEach((d,idx)=>d.className='gdot'+(idx===i?' active':''));
+}
+
+function prevImg(){setImg((state.imgIdx-1+3)%3)}
+function nextImg(){setImg((state.imgIdx+1)%3)}
+
+function toggleWalkthrough(){
+  state.walkthrough=!state.walkthrough;
+  document.getElementById('wt-frame').classList.toggle('hidden',!state.walkthrough);
+  document.getElementById('wt-btn').innerHTML=state.walkthrough?'▼ &nbsp;Hide 3D Walkthrough':'▶ &nbsp;Launch Virtual 3D Walkthrough';
+}
+
+function sendMessage(){
+  const n=document.getElementById('form-name').value;
+  const e=document.getElementById('form-email').value;
+  const m=document.getElementById('form-msg').value;
+  if(!n&&!e&&!m) return;
+  document.getElementById('contact-form-wrap').classList.add('hidden');
+  document.getElementById('form-success').classList.remove('hidden');
+  document.getElementById('success-agent').textContent=state.selected.agent;
+}
+
+function handleSearch(val){
+  state.search=val;
+  clearTimeout(state.debounceTimer);
+  state.debounceTimer=setTimeout(()=>render(),220);
+  if(val.length>0){
+    const matches=SUGGESTIONS.filter(s=>s.toLowerCase().includes(val.toLowerCase()));
+    const el=document.getElementById('suggestions');
+    if(matches.length>0){
+      el.innerHTML=matches.map(s=>`<div class="suggestion-item" onclick="selectSuggestion('${s}')"><span class="suggestion-pin">📍</span>${s}</div>`).join('');
+      el.classList.remove('hidden');
+    } else el.classList.add('hidden');
+  } else document.getElementById('suggestions').classList.add('hidden');
+}
+
+function onSearchFocus(){
+  if(state.search.length>0&&document.getElementById('suggestions').children.length>0)
+    document.getElementById('suggestions').classList.remove('hidden');
+}
+
+function onSearchBlur(){setTimeout(()=>document.getElementById('suggestions').classList.add('hidden'),200)}
+
+function selectSuggestion(s){
+  state.search=s;
+  document.getElementById('search-input').value=s;
+  document.getElementById('suggestions').classList.add('hidden');
+  render();
+}
+
+function applySearch(){
+  state.search=document.getElementById('search-input').value;
+  document.getElementById('suggestions').classList.add('hidden');
+  render();
+  document.getElementById('results-panel').scrollIntoView({behavior:'smooth'});
+}
+
+function setType(t,el){
+  state.type=t;
+  document.querySelectorAll('#type-pills .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function setPrice(p,el){
+  state.price=p;
+  document.querySelectorAll('#price-pills .pill').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function setBeds(b,el){
+  state.beds=b;
+  document.querySelectorAll('#bed-pills .pill').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function setStatus(s,el){
+  state.status=s;
+  document.querySelectorAll('#status-pills .pill').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function setView(v){
+  state.view=v;
+  document.getElementById('grid-btn').classList.toggle('active',v==='grid');
+  document.getElementById('list-btn').classList.toggle('active',v==='list');
+  render();
+}
+
+function showView(v){
+  state.currentView=v;
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  if(v==='browse') document.querySelectorAll('.nav-link')[0].classList.add('active');
+  else document.querySelectorAll('.nav-link')[1].classList.add('active');
+  document.getElementById('hero-section').classList.toggle('hidden',v==='saved');
+  render();
+}
+
+function clearViewed(){state.viewed=[];renderViewed()}
+
+document.getElementById('sort-select').addEventListener('change',function(){state.sort=this.value;render()});
+
+render();
+</script>
+</body>
+</html>
